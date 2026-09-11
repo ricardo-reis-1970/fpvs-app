@@ -1,0 +1,21 @@
+async function estimateRefreshRate(frames = 180) {
+  const t = []
+  let prev = 0, n = 0
+  await new Promise((res) => {
+    const step = (ts) => {
+      if (prev) t.push(ts - prev)
+      prev = ts
+      if (++n < frames) requestAnimationFrame(step); else res()
+    }
+    requestAnimationFrame(step)
+  })
+  t.sort((a, b) => a - b)
+  const med = t[t.length >> 1]
+  const p25 = t[(t.length * 0.25) | 0]
+  const p75 = t[(t.length * 0.75) | 0]
+  return {
+    hz: 1000 / med,
+    jitterMs: p75 - p25,
+    stable: (p75 - p25) < 0.5,   // ~0.5 ms spread → stable
+  }
+}
